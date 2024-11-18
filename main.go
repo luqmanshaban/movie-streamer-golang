@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var filmDir string
+
+func init() {
+	filmDirFlag := flag.String("filmDir", "./films", "Directory where films are stored")
+	flag.Parse()
+	if *filmDirFlag != "" {
+		filmDir = *filmDirFlag
+	} else {
+		filmDir = "./films"
+	}
+
+	if _, err := os.Stat(filmDir); os.IsNotExist(err) {
+		os.Mkdir(filmDir, 0o755)
+	}
+}
 
 func main() {
 	r := gin.Default()
@@ -17,8 +33,6 @@ func main() {
 }
 
 func StreamFilm(c *gin.Context) {
-	filmDir := "./films"
-
 	f := c.Param("name")
 	if f == "" {
 		c.JSON(400, gin.H{"error": "filname field required in params"})
@@ -29,10 +43,10 @@ func StreamFilm(c *gin.Context) {
 	fmt.Println(fp)
 	if _, err := os.Stat(fp); os.IsNotExist(err) {
 		c.JSON(404, gin.H{"error": "Movie does not exist"})
-		return 
+		return
 	}
 
 	c.Header("Content-Type", "video/mp4")
 	c.File(fp)
-
 }
+
